@@ -13,116 +13,335 @@
         body {
             height: 100vh;
             overflow: hidden;
-            background: black;
+            background: linear-gradient(180deg, #0a0a0a 0%, #000000 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             font-family: "Microsoft Yahei", sans-serif;
             position: relative;
+            width: 100vw;
+            min-width: 100vw;
         }
         .snow {
             position: absolute;
             top: -10px;
             left: 0;
-            color: white;
-            opacity: 0.8;
-            animation: fall linear infinite;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            opacity: 0.7;
             pointer-events: none;
+            filter: blur(1.5px);
+            z-index: 10;
         }
         @keyframes fall {
-            to {
-                transform: translateY(100vh);
+            0% {
+                transform: translateY(0) translateX(0);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(100vh) translateX(20px);
                 opacity: 0;
             }
         }
         .title {
-            font-size: 3rem;
+            font-size: 3.2rem;
             font-family: "STKaiti", "KaiTi", "SimSun", sans-serif;
             font-weight: bold;
-            background: linear-gradient(135deg, #ffd700, #ffb800);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
-            text-shadow: 0 0 8px rgba(255, 215, 0, 0.8), 0 0 20px rgba(255, 215, 0, 0.5);
-            margin-bottom: 20px;
-            z-index: 1;
+            color: #8A9BA8;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 8px rgba(138, 155, 168, 0.15);
+            margin-bottom: 25px;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: fit-content;
+            height: fit-content;
+            /* 优化2：标题呼吸光效（不晃，仅轻微明暗变化） */
+            animation: breath 4s ease-in-out infinite;
+        }
+        .title span {
+            opacity: 0;
+            animation: dropIn 1.2s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+        }
+        @keyframes dropIn {
+            0% {
+                opacity: 0;
+                transform: translateY(-100px) scale(0.9);
+            }
+            70% {
+                opacity: 0.9;
+                transform: translateY(10px) scale(1.02);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        /* 呼吸光效关键帧 */
+        @keyframes breath {
+            0%, 100% {
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 8px rgba(138, 155, 168, 0.15);
+                opacity: 1;
+            }
+            50% {
+                text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 0 12px rgba(138, 155, 168, 0.3);
+                opacity: 0.95;
+            }
         }
         .official {
             font-size: 1.2rem;
-            color: white;
-            background: rgba(255,255,255,0.1);
-            padding: 8px 20px;
-            border-radius: 20px;
-            margin-bottom: 40px;
-            z-index: 1;
+            color: #b0b0b0;
+            background: rgba(255,255,255,0.08);
+            padding: 8px 22px;
+            border-radius: 22px;
+            margin-bottom: 45px;
+            z-index: 20;
+            border: 1px solid rgba(255,255,255,0.1);
+            width: fit-content;
+            height: fit-content;
         }
         .button-group {
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            max-width: 400px;
+            gap: 18px;
+            max-width: 420px;
             width: 90%;
-            z-index: 1;
+            z-index: 20;
+            position: relative;
         }
         .btn {
-            padding: 15px 20px;
-            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
-            border: 1px solid rgba(255,255,255,0.3);
-            border-radius: 10px;
-            color: white;
-            font-size: 1rem;
+            padding: 16px 22px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.06) 100%);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 12px;
+            color: #e0e0e0;
+            font-size: 1.05rem;
             text-align: center;
             text-decoration: none;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(8px);
+            transition: background 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px; /* 图标与文字间距 */
         }
         .btn:hover {
-            background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.2) 100%);
-            transform: scale(1.05);
+            background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.1) 100%);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        /* 优化3：按钮图标hover变色 */
+        .btn:hover .icon {
+            color: #1677ff;
+            transition: color 0.3s ease;
+        }
+        .btn:active {
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
         }
         .tip {
-            margin-top: 40px;
-            color: white;
+            margin-top: 45px;
+            color: #999;
             font-size: 1rem;
             text-shadow: 0 0 5px rgba(0,0,0,0.5);
-            z-index: 1;
+            z-index: 20;
+            position: relative;
+        }
+        /* 播放器完全固定，不晃 */
+        .music-player {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            height: 42px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 0 18px;
+            border-radius: 22px;
+            z-index: 999;
+            width: auto;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        .music-switch {
+            width: 52px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .music-switch-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: left 0.3s ease, background 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+        .music-switch.active .music-switch-slider {
+            left: 30px;
+            background: #1677ff;
+            box-shadow: 0 0 8px rgba(22, 119, 255, 0.6);
+        }
+        .music-time {
+            color: #b0b0b0;
+            font-size: 12px;
+        }
+        /* 页面加载过渡 */
+        body > * {
+            opacity: 0;
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        .title { animation-delay: 0.2s; }
+        .official { animation-delay: 0.4s; }
+        .button-group { animation-delay: 0.6s; }
+        .tip { animation-delay: 0.8s; }
+        .music-player { animation-delay: 0s; }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
     </style>
 </head>
 <body>
-    <h1 class="title">ACT导航页</h1>
+    <div class="music-player">
+        <div class="music-switch" id="musicSwitch">
+            <div class="music-switch-slider"></div>
+        </div>
+        <div class="music-time" id="musicTime">00:00 / 00:00</div>
+    </div>
+
+    <h1 class="title">
+        <span>A</span>
+        <span>C</span>
+        <span>T</span>
+        <span>导</span>
+        <span>航</span>
+        <span>页</span>
+    </h1>
     <div class="official">官网: ACT内部.xyz</div>
     <div class="button-group">
-        <a href="https://shop.682fk.com/shop/actnb8" class="btn">🛒点我稳定</a>
-        <a href="https://actnb.lanzoum.com/ifzwf3bz74cd" class="btn">🧹清理工具</a>
-        <a href="https://t.me/qiulinnb8" class="btn">🛩️官方频道</a>
-        <a href="https://qun.qq.com/universal-share/share?ac=1&authKey=LAZrU9too8hlAUwFePVQmW1FH%2FCCIQ9KcpdEXnJO280djG%2Be90JmhUA2dVviHsfD&busi_data=eyJncm91cENvZGUiOiI3Mzg1NzEwMzciLCJ0b2tlbiI6IkdGWFBBelhvZUx2UlVpTE8yQXBWZk1NcDZkVlhGTlRuY0N1RnN5WUxOaW5HcTRwc0Jid3EyQmtEYUMreFRwWDgiLCJ1aW4iOiIyNTQ3NDg5OTc4In0%3D&data=4HU9TzATbsflI8cDP5-UOs2_1XGvQ1kAqkJRtpoN-E2J3UdM0pjafq3zwGekAMfi7uCdcHgShzu7A0gFKuEPsg&svctype=4&tempid=h5_group_info" class="btn">🐧QQ群</a>
-        <a href="https://t.me/actfy" class="btn">😎联系官方客服</a>
+        <!-- 按钮图标包裹在.icon类中，hover变色 -->
+        <a href="https://shop.682fk.com/shop/actnb8" class="btn"><span class="icon">🛒</span> 点我稳定</a>
+        <a href="https://actnb.lanzoum.com/ifzwf3bz74cd" class="btn"><span class="icon">🧹</span> 清理工具</a>
+        <a href="https://t.me/qiulinnb8" class="btn"><span class="icon">🛩️</span> 官方频道</a>
+        <a href="https://qun.qq.com/universal-share/share?ac=1&authKey=LAZrU9too8hlAUwFePVQmW1FH%2FCCIQ9KcpdEXnJO280djG%2Be90JmhUA2dVviHsfD&busi_data=eyJncm91cENvZGUiOiI3Mzg1NzEwMzciLCJ0b2tlbiI6IkdGWFBBelhvZUx2UlVpTE8yQXBWZk1NcDZkVlhGTlRuY0N1RnN5WUxOaW5HcTRwc0Jid3EyQmtEYUMreFRwWDgiLCJ1aW4iOiIyNTQ3NDg5OTc4In0%3D&data=4HU9TzATbsflI8cDP5-UOs2_1XGvQ1kAqkJRtpoN-E2J3UdM0pjafq3zwGekAMfi7uCdcHgShzu7A0gFKuEPsg&svctype=4&tempid=h5_group_info" class="btn"><span class="icon">🐧</span> QQ群</a>
+        <a href="https://t.me/actfy" class="btn"><span class="icon">😎</span> 联系官方客服</a>
     </div>
     <div class="tip">购卡后请联系客服拿包</div>
 
     <script>
-        // 雪花效果
+        // 音乐播放控制
+        const audioUrl = 'https://xx13146.oss-cn-beijing.aliyuncs.com//3e/63d7389ac887ea2eec10e63a9040d1.mp3'; // 替换为你的音乐地址
+        const audio = new Audio(audioUrl);
+        const musicSwitch = document.getElementById('musicSwitch');
+        const musicTime = document.getElementById('musicTime');
+        let isPlaying = false;
+
+        // 格式化时间
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // 更新时间显示
+        function updateTime() {
+            if (audio.duration) {
+                musicTime.textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
+            }
+        }
+
+        // 播放/暂停切换
+        function togglePlay() {
+            if (isPlaying) {
+                audio.pause();
+                musicSwitch.classList.remove('active');
+            } else {
+                audio.play().catch(err => {
+                    console.log('播放需要用户交互，点击按钮重试');
+                });
+                musicSwitch.classList.add('active');
+            }
+            isPlaying = !isPlaying;
+        }
+
+        // 自动播放（如果浏览器允许）
+        document.addEventListener('DOMContentLoaded', () => {
+            audio.volume = 0.3;
+            audio.play().then(() => {
+                isPlaying = true;
+                musicSwitch.classList.add('active');
+            }).catch(err => {
+                console.log('自动播放被拦截，点击按钮开始播放');
+                isPlaying = false;
+                musicSwitch.classList.remove('active');
+            });
+
+            // 更新时间
+            audio.addEventListener('timeupdate', updateTime);
+            audio.addEventListener('loadedmetadata', updateTime);
+
+            // 循环播放
+            audio.addEventListener('ended', () => {
+                audio.currentTime = 0;
+                audio.play();
+                musicSwitch.classList.add('active');
+            });
+
+            // 仅点击开关触发
+            musicSwitch.addEventListener('click', togglePlay);
+        });
+
+        // 标题逐字嵌入动画
+        const spans = document.querySelectorAll('.title span');
+        spans.forEach((span, index) => {
+            span.style.animationDelay = `${index * 0.18}s`;
+        });
+
+        // 雪花生成
         function createSnow() {
             const snow = document.createElement('div');
             snow.className = 'snow';
-            snow.textContent = '❄';
+            const size = Math.random() * 8 + 2;
+            snow.style.width = size + 'px';
+            snow.style.height = size + 'px';
             snow.style.left = Math.random() * 100 + 'vw';
-            snow.style.fontSize = Math.random() * 10 + 10 + 'px';
-            snow.style.animationDuration = Math.random() * 5 + 5 + 's';
-            document.body.appendChild(snow);
-            setTimeout(() => {
-                snow.remove();
-            }, 10000);
-        }
-        setInterval(createSnow, 300);
+            const startOffset = Math.random() * 15 - 7;
+            snow.style.transform = `translateX(${startOffset}px)`;
+            const duration = Math.random() * 8 + 5;
+            snow.style.animation = `fall ${duration}s linear infinite`;
+            snow.style.opacity = Math.random() * 0.4 + 0.3;
 
-        // 音乐播放
-        const audio = new Audio('https://example.com/music.mp3');
-        document.body.addEventListener('click', () => {
-            audio.play().catch(err => console.log('播放失败:', err));
-        });
+            document.body.appendChild(snow);
+            setTimeout(() => snow.remove(), duration * 1000);
+        }
+
+        const density = 30;
+        setInterval(createSnow, 1000 / density);
+
+        // 浏览器兼容处理
+        (function() {
+            if (!window.requestAnimationFrame) {
+                window.requestAnimationFrame = window.mozRequestAnimationFrame ||
+                    window.webkitRequestAnimationFrame ||
+                    window.msRequestAnimationFrame ||
+                    function(callback) {
+                        return setTimeout(callback, 16);
+                    };
+            }
+            if (!window.AudioContext && !window.webkitAudioContext) {
+                console.log('当前浏览器不支持音频播放，建议升级浏览器');
+            }
+        })();
     </script>
 </body>
 </html>
