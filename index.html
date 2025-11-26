@@ -13,7 +13,8 @@
         body {
             height: 100vh;
             overflow: hidden;
-            background-image: linear-gradient(180deg, rgba(10, 10, 10, 0.7), rgba(0, 0, 0, 0.75)), url('https://iknow-pic.cdn.bcebos.com/72f082025aafa40f2bbc8440b964034f78f01930');
+            background-image: linear-gradient(180deg, rgba(10, 10, 10, 0.7), rgba(0, 0, 0, 0.75)), 
+                              url('http://wpan.cdndns.site/down/ed4800e81fee66d8b42c080baf02789b');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -26,20 +27,43 @@
             width: 100vw;
             min-width: 100vw;
         }
-        /* 小图形效果 */
-        .web {
+        /* 雪花背景容器 */
+        .snow-container {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            z-index: 1;
             pointer-events: none;
-            z-index: 10;
         }
-        .web-svg {
+        /* 雪花样式 */
+        .snowflake {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            animation: snowfall linear infinite;
+            pointer-events: none;
+        }
+        @keyframes snowfall {
+            0% {
+                transform: translateY(-10%) rotate(0deg);
+            }
+            100% {
+                transform: translateY(110vh) rotate(360deg);
+            }
+        }
+        /* 动态连线Canvas */
+        #connectionCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
+            z-index: 2;
+            pointer-events: none;
         }
+        /* 标题样式 */
         .title {
             font-size: 3.2rem;
             font-family: "STKaiti", "KaiTi", "SimSun", sans-serif;
@@ -124,7 +148,7 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
             position: relative;
             overflow: hidden;
-            -webkit-tap-highlight-color: transparent; /* 去除iOS点击高亮 */
+            -webkit-tap-highlight-color: transparent;
         }
         .btn::before {
             content: '';
@@ -151,7 +175,7 @@
             background: linear-gradient(135deg, rgba(255, 105, 180, 0.2) 0%, rgba(255, 105, 180, 0.1) 100%);
             border-color: rgba(255, 105, 180, 0.3);
             animation: pressEffect 0.2s cubic-bezier(0.2, 0.8, 0.3, 1);
-            outline: none; /* 去除点击焦点 */
+            outline: none;
         }
         @keyframes pressEffect {
             0% {
@@ -464,12 +488,12 @@
     </style>
 </head>
 <body>
-    <!-- 小图形效果 -->
-    <div class="web">
-        <svg class="web-svg" xmlns="http://www.w3.org/2000/svg">
-            <g id="webContainer"></g>
-        </svg>
-    </div>
+    <!-- 雪花背景容器 -->
+    <div class="snow-container" id="snowContainer"></div>
+    
+    <!-- 动态连线Canvas -->
+    <canvas id="connectionCanvas"></canvas>
+    
     <div class="music-player">
         <div class="music-switch" id="musicSwitch">
             <div class="music-switch-slider"></div>
@@ -499,7 +523,7 @@
         <div class="popup">
             <div class="popup-title">选择客服方式</div>
             <a href="https://t.me/actfy" class="popup-button">Telegram客服</a>
-            <div class="popup-button" id="qqServiceBtn">QQ客服</div> <!-- 改为div按钮 -->
+            <div class="popup-button" id="qqServiceBtn">QQ客服</div>
         </div>
     </div>
     <!-- QQ号复制弹窗 -->
@@ -533,102 +557,134 @@
     <!-- 错误提示 -->
     <div class="error-toast" id="errorToast">密码错误，请重试</div>
     <script>
-        // 生成几个独立的小图形效果
-        function createSmallShapes() {
-            const container = document.getElementById('webContainer');
-            const width = window.innerWidth;
-            const height = window.innerHeight;
+        // 雪花动画
+        function createSnowfall() {
+            const container = document.getElementById('snowContainer');
+            const count = window.innerWidth < 768 ? 150 : 300;
             
             // 清空容器
             container.innerHTML = '';
             
-            // 配置参数
-            const config = {
-                shapeCount: 6,         // 小图形数量
-                minSize: 40,           // 最小尺寸
-                maxSize: 80,           // 最大尺寸
-                pointRadius: 1.2,      // 节点大小
-                lineWidth: 0.8,        // 连线粗细
-                color: '#ffffff',      // 颜色
-                opacity: 0.6,          // 透明度
-                blinkInterval: 3000,   // 闪动间隔（毫秒）
-                animationDuration: 15  // 动画时长（秒）
-            };
-            
-            // 处理颜色透明度
-            const opacityHex = Math.floor(config.opacity * 255).toString(16).padStart(2, '0');
-            const pointColor = `${config.color}${opacityHex}`;
-            const lineColor = `${config.color}${opacityHex}`;
-            
-            // 生成独立的小图形
-            for (let i = 0; i < config.shapeCount; i++) {
-                // 随机位置和尺寸
-                const x = Math.random() * width;
-                const y = Math.random() * height;
-                const size = config.minSize + Math.random() * (config.maxSize - config.minSize);
+            for (let i = 0; i < count; i++) {
+                const snowflake = document.createElement('div');
+                snowflake.classList.add('snowflake');
                 
-                // 生成多边形顶点（3-5个顶点）
-                const points = [];
-                const vertexCount = 3 + Math.floor(Math.random() * 3); // 3-5个顶点
-                for (let j = 0; j < vertexCount; j++) {
-                    const angle = (j / vertexCount) * Math.PI * 2;
-                    const radius = size * 0.5 * (0.8 + Math.random() * 0.2);
-                    points.push({
-                        x: x + Math.cos(angle) * radius,
-                        y: y + Math.sin(angle) * radius
-                    });
+                // 随机属性
+                const size = Math.random() * 4 + 1;
+                const duration = Math.random() * 15 + 5;
+                const xPos = Math.random() * 100;
+                const delay = Math.random() * 10;
+                const opacity = Math.random() * 0.5 + 0.3;
+                
+                // 设置样式
+                snowflake.style.width = `${size}px`;
+                snowflake.style.height = `${size}px`;
+                snowflake.style.left = `${xPos}%`;
+                snowflake.style.animationDuration = `${duration}s`;
+                snowflake.style.animationDelay = `${delay}s`;
+                snowflake.style.opacity = opacity;
+                
+                container.appendChild(snowflake);
+            }
+        }
+        
+        // 动态连线动画
+        function createConnections() {
+            const canvas = document.getElementById('connectionCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 设置画布尺寸
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // 点的数量
+            const pointCount = 30;
+            const points = [];
+            
+            // 创建点
+            class Point {
+                constructor() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.vx = (Math.random() - 0.5) * 0.8;
+                    this.vy = (Math.random() - 0.5) * 0.8;
+                    this.size = Math.random() * 1.5 + 0.5;
                 }
                 
-                // 绘制节点
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    
+                    // 边界反弹
+                    if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                    if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+                }
+                
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                    ctx.fill();
+                }
+            }
+            
+            // 初始化点
+            for (let i = 0; i < pointCount; i++) {
+                points.push(new Point());
+            }
+            
+            // 动画循环
+            function animate() {
+                // 清空画布
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // 更新并绘制点
                 points.forEach(point => {
-                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                    circle.setAttribute('cx', point.x);
-                    circle.setAttribute('cy', point.y);
-                    circle.setAttribute('r', config.pointRadius);
-                    circle.setAttribute('fill', pointColor);
-                    circle.setAttribute('class', 'shape-point');
-                    container.appendChild(circle);
+                    point.update();
+                    point.draw();
                 });
                 
                 // 绘制连线
-                for (let j = 0; j < points.length; j++) {
-                    const nextIndex = (j + 1) % points.length;
-                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                    line.setAttribute('x1', points[j].x);
-                    line.setAttribute('y1', points[j].y);
-                    line.setAttribute('x2', points[nextIndex].x);
-                    line.setAttribute('y2', points[nextIndex].y);
-                    line.setAttribute('stroke', lineColor);
-                    line.setAttribute('stroke-width', config.lineWidth);
-                    line.setAttribute('class', 'shape-line');
-                    container.appendChild(line);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 0.8;
+                
+                for (let i = 0; i < points.length; i++) {
+                    for (let j = i + 1; j < points.length; j++) {
+                        const p1 = points[i];
+                        const p2 = points[j];
+                        const distance = Math.sqrt(
+                            Math.pow(p1.x - p2.x, 2) + 
+                            Math.pow(p1.y - p2.y, 2)
+                        );
+                        
+                        // 距离小于120像素时连线
+                        if (distance < 120) {
+                            ctx.beginPath();
+                            ctx.moveTo(p1.x, p1.y);
+                            ctx.lineTo(p2.x, p2.y);
+                            ctx.stroke();
+                        }
+                    }
                 }
+                
+                requestAnimationFrame(animate);
             }
             
-            // 线条闪动动画
-            function blinkLines() {
-                const lines = document.querySelectorAll('.shape-line');
-                lines.forEach(line => {
-                    // 随机设置初始透明度
-                    const initialOpacity = Math.random() * 0.5 + 0.3;
-                    line.style.opacity = initialOpacity;
-                    
-                    // 闪动动画
-                    setInterval(() => {
-                        line.style.transition = 'opacity 1s ease';
-                        line.style.opacity = Math.random() * 0.5 + 0.3;
-                    }, config.blinkInterval);
-                });
-            }
-            
-            blinkLines();
+            animate();
         }
         
-        // 页面加载完成后生成效果
-        window.addEventListener('load', createSmallShapes);
+        // 页面加载完成后启动动画
+        window.addEventListener('load', () => {
+            createSnowfall();
+            createConnections();
+        });
         
-        // 窗口大小变化时重新生成
-        window.addEventListener('resize', createSmallShapes);
+        // 窗口大小变化时重新生成雪花
+        window.addEventListener('resize', createSnowfall);
         
         // 音乐播放控制
         const audioUrl = 'https://xx13146.oss-cn-beijing.aliyuncs.com//3e/63d7389ac887ea2eec10e63a9040d1.mp3';
