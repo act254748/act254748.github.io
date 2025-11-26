@@ -26,6 +26,7 @@
             position: relative;
             width: 100vw;
             min-width: 100vw;
+            cursor: default;
         }
         /* 雪花背景容器 */
         .snow-container {
@@ -61,6 +62,16 @@
             width: 100%;
             height: 100%;
             z-index: 2;
+            pointer-events: none;
+        }
+        /* 点击特效Canvas - 调整层级到连线和内容之间 */
+        #clickEffectCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
             pointer-events: none;
         }
         /* 标题样式 */
@@ -196,52 +207,6 @@
             z-index: 20;
             position: relative;
         }
-        .music-player {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            height: 42px;
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(12px);
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 0 18px;
-            border-radius: 22px;
-            z-index: 999;
-            width: auto;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        }
-        .music-switch {
-            width: 52px;
-            height: 24px;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
-            position: relative;
-            cursor: pointer;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .music-switch-slider {
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            width: 20px;
-            height: 20px;
-            background: white;
-            border-radius: 50%;
-            transition: left 0.3s ease, background 0.3s ease;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-        }
-        .music-switch.active .music-switch-slider {
-            left: 30px;
-            background: #ff69b4;
-            box-shadow: 0 0 8px rgba(255, 105, 180, 0.6);
-        }
-        .music-time {
-            color: #b0b0b0;
-            font-size: 12px;
-        }
         body > * {
             opacity: 0;
             animation: fadeIn 0.8s ease-out forwards;
@@ -250,7 +215,6 @@
         .official { animation-delay: 0.4s; }
         .button-group { animation-delay: 0.6s; }
         .tip { animation-delay: 0.8s; }
-        .music-player { animation-delay: 0s; }
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
@@ -494,12 +458,9 @@
     <!-- 动态连线Canvas -->
     <canvas id="connectionCanvas"></canvas>
     
-    <div class="music-player">
-        <div class="music-switch" id="musicSwitch">
-            <div class="music-switch-slider"></div>
-        </div>
-        <div class="music-time" id="musicTime">00:00 / 00:00</div>
-    </div>
+    <!-- 点击特效Canvas -->
+    <canvas id="clickEffectCanvas"></canvas>
+    
     <h1 class="title">
         <span>A</span>
         <span>C</span>
@@ -677,62 +638,201 @@
             animate();
         }
         
+        // 点击特效动画 - 修复黑色遮盖问题
+        function createClickEffects() {
+            const canvas = document.getElementById('clickEffectCanvas');
+            const ctx = canvas.getContext('2d');
+            const effects = [];
+            
+            // 设置画布尺寸
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // 点击效果类 - 优化参数让特效更明显
+            class ClickEffect {
+                constructor(x, y) {
+                    this.x = x;
+                    this.y = y;
+                    this.radius = 8;          // 初始半径
+                    this.maxRadius = 80;      // 最大半径（增大）
+                    this.alpha = 1;           // 初始透明度
+                    this.fadeSpeed = 0.015;   // 减慢淡出速度
+                    this.growSpeed = 1.2;     // 减慢生长速度
+                    this.segments = 12;       // 增加网格分段（更密集）
+                    this.angleStep = (Math.PI * 2) / this.segments;
+                    this.lineWidth = 1.2;     // 加粗线条
+                }
+                
+                update() {
+                    this.radius += this.growSpeed;
+                    this.alpha -= this.fadeSpeed;
+                    
+                    // 超出最大半径或透明度为0时移除
+                    return this.radius > this.maxRadius || this.alpha <= 0;
+                }
+                
+                draw() {
+                    ctx.save();
+                    ctx.globalAlpha = this.alpha;
+                    // 改用粉色系线条，和页面风格统一且更显眼
+                    ctx.strokeStyle = 'rgba(255, 105, 180, 0.9)';
+                    ctx.lineWidth = this.lineWidth;
+                    
+                    // 绘制网格圆形（双层网格更清晰）
+                    // 外层圆弧
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.stroke();
+                    
+                    // 内层圆弧（半径为外层的一半）
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius * 0.5, 0, Math.PI * 2);
+                    ctx.stroke();
+                    
+                    // 径向线（连接中心和外层）
+                    for (let i = 0; i < this.segments; i++) {
+                        const angle = this.angleStep * i;
+                        const x1 = this.x + Math.cos(angle) * this.radius;
+                        const y1 = this.y + Math.sin(angle) * this.radius;
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(this.x, this.y);
+                        ctx.lineTo(x1, y1);
+                        ctx.stroke();
+                    }
+                    
+                    ctx.restore();
+                }
+            }
+            
+            // 添加点击效果
+            function addEffect(x, y) {
+                effects.push(new ClickEffect(x, y));
+            }
+            
+            // 动画循环 - 修复清除方式，不再添加黑色背景
+            function animate() {
+                // 关键修复：用clearRect完全清空画布，避免半透明黑色叠加
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // 更新并绘制所有效果
+                for (let i = effects.length - 1; i >= 0; i--) {
+                    const effect = effects[i];
+                    // 先更新再绘制，避免重复调用update
+                    const isExpired = effect.update();
+                    effect.draw();
+                    
+                    // 移除过期效果
+                    if (isExpired) {
+                        effects.splice(i, 1);
+                    }
+                }
+                
+                requestAnimationFrame(animate);
+            }
+            
+            // 监听点击事件 - 扩大触发范围，确保空白处都能触发
+            document.addEventListener('click', (e) => {
+                // 排除按钮、弹窗等元素
+                const target = e.target;
+                if (!target.closest('.btn, .popup, .popup-overlay, .qq-copy-overlay, .copy-toast, .error-toast, .loading-overlay')) {
+                    addEffect(e.clientX, e.clientY);
+                }
+            });
+            
+            animate();
+        }
+        
         // 页面加载完成后启动动画
         window.addEventListener('load', () => {
             createSnowfall();
             createConnections();
+            createClickEffects();
         });
         
         // 窗口大小变化时重新生成雪花
         window.addEventListener('resize', createSnowfall);
         
-        // 音乐播放控制
+        // 音乐播放控制 - 优化快速恢复播放
         const audioUrl = 'https://xx13146.oss-cn-beijing.aliyuncs.com//3e/63d7389ac887ea2eec10e63a9040d1.mp3';
         const audio = new Audio(audioUrl);
-        const musicSwitch = document.getElementById('musicSwitch');
-        const musicTime = document.getElementById('musicTime');
         let isPlaying = false;
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-        }
-        function updateTime() {
-            if (audio.duration) {
-                musicTime.textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
-            }
-        }
-        function togglePlay() {
-            if (isPlaying) {
-                audio.pause();
-                musicSwitch.classList.remove('active');
-            } else {
-                audio.play().catch(err => {
-                    console.log('播放需要用户交互，点击按钮重试');
-                });
-                musicSwitch.classList.add('active');
-            }
-            isPlaying = !isPlaying;
-        }
-        document.addEventListener('DOMContentLoaded', () => {
-            audio.volume = 1;
+        let playbackTimer = null; // 播放恢复定时器
+        
+        // 播放音乐函数
+        function playMusic() {
+            // 清除之前的定时器避免重复
+            if (playbackTimer) clearTimeout(playbackTimer);
+            
             audio.play().then(() => {
                 isPlaying = true;
-                musicSwitch.classList.add('active');
+                console.log('音乐开始播放');
             }).catch(err => {
-                console.log('自动播放被拦截，点击按钮开始播放');
-                isPlaying = false;
-                musicSwitch.classList.remove('active');
+                console.log('自动播放被拦截，等待用户交互');
+                // 绑定一次点击事件尝试播放
+                document.addEventListener('click', tryPlayOnClick, { once: true });
             });
-            audio.addEventListener('timeupdate', updateTime);
-            audio.addEventListener('loadedmetadata', updateTime);
-            audio.addEventListener('ended', () => {
-                audio.currentTime = 0;
-                audio.play();
-                musicSwitch.classList.add('active');
+        }
+        
+        // 用户点击页面时尝试播放
+        function tryPlayOnClick() {
+            audio.play().then(() => {
+                isPlaying = true;
+                console.log('音乐通过用户交互开始播放');
+            }).catch(err => {
+                console.log('播放失败，300ms后重试');
+                // 失败后300ms再次尝试
+                playbackTimer = setTimeout(tryPlayOnClick, 300);
             });
-            musicSwitch.addEventListener('click', togglePlay);
+        }
+        
+        // 检测音乐状态并快速恢复
+        function checkAndResumePlayback() {
+            if (!isPlaying && audio.currentTime > 0) {
+                console.log('音乐暂停，300ms后恢复');
+                playbackTimer = setTimeout(() => {
+                    playMusic();
+                }, 300);
+            }
+        }
+        
+        // 监听音乐暂停事件
+        audio.addEventListener('pause', () => {
+            isPlaying = false;
+            checkAndResumePlayback();
         });
+        
+        // 监听音乐播放事件
+        audio.addEventListener('play', () => {
+            isPlaying = true;
+            if (playbackTimer) clearTimeout(playbackTimer);
+        });
+        
+        // 监听音乐结束事件（循环播放）
+        audio.addEventListener('ended', () => {
+            audio.currentTime = 0;
+            playMusic();
+        });
+        
+        // 页面加载后立即尝试播放
+        document.addEventListener('DOMContentLoaded', () => {
+            audio.volume = 1;
+            playMusic();
+        });
+        
+        // 页面隐藏时暂停，显示时立即恢复
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                audio.pause();
+            } else if (!isPlaying) {
+                playMusic();
+            }
+        });
+        
         const spans = document.querySelectorAll('.title span');
         spans.forEach((span, index) => {
             span.style.animationDelay = `${index * 0.18}s`;
@@ -758,8 +858,8 @@
         
         // 点击QQ客服显示复制弹窗
         qqServiceBtn.addEventListener('click', function() {
-            popupOverlay.style.display = 'none'; // 关闭原客服弹窗
-            qqCopyOverlay.style.display = 'flex'; // 显示复制弹窗
+            popupOverlay.style.display = 'none';
+            qqCopyOverlay.style.display = 'flex';
         });
         
         // 取消复制
@@ -778,7 +878,6 @@
         confirmCopy.addEventListener('click', function() {
             const qq = qqNumber.textContent.trim();
             navigator.clipboard.writeText(qq).then(() => {
-                // 显示复制成功提示
                 copyToast.style.display = 'block';
                 setTimeout(() => {
                     copyToast.style.display = 'none';
@@ -801,8 +900,8 @@
         const cancelPackage = document.getElementById('cancelPackage');
         const loadingOverlay = document.getElementById('loadingOverlay');
         const errorToast = document.getElementById('errorToast');
-        // 请把下载地址替换成你的真实地址
         const downloadUrl = 'https://www.123912.com/s/3fY5Vv-Eq0g3';
+        
         function showError() {
             errorToast.style.display = 'block';
             setTimeout(() => {
@@ -815,6 +914,7 @@
         function hideLoading() {
             loadingOverlay.style.display = 'none';
         }
+        
         packageBtn.addEventListener('click', () => {
             packageOverlay.style.display = 'flex';
             packagePassword.value = '';
