@@ -449,6 +449,37 @@
             display: none;
             z-index: 1002;
         }
+        /* 成功提示 */
+        .success-toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(74, 222, 128, 0.9);
+            color: white;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 1002;
+        }
+        /* 下载引导提示 */
+        .download-guide {
+            position: fixed;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: #e0e0e0;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 1002;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -479,6 +510,7 @@
         <div class="btn" id="getPackageBtn"><span class="icon">📦</span> 获取安装包</div>
     </div>
     <div class="tip">购卡后请联系客服拿包</div>
+    
     <!-- 客服弹窗 -->
     <div class="popup-overlay" id="popupOverlay">
         <div class="popup">
@@ -487,6 +519,7 @@
             <div class="popup-button" id="qqServiceBtn">QQ客服</div>
         </div>
     </div>
+    
     <!-- QQ号复制弹窗 -->
     <div class="qq-copy-overlay" id="qqCopyOverlay">
         <div class="qq-copy-popup">
@@ -498,8 +531,10 @@
             </div>
         </div>
     </div>
+    
     <!-- 复制成功提示 -->
     <div class="copy-toast" id="copyToast">复制成功！</div>
+    
     <!-- 安装包密码弹窗 -->
     <div class="package-overlay" id="packageOverlay">
         <div class="package-popup">
@@ -511,33 +546,57 @@
             </div>
         </div>
     </div>
+    
     <!-- 加载动画 -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner"></div>
     </div>
+    
     <!-- 错误提示 -->
     <div class="error-toast" id="errorToast">密码错误，请重试</div>
+    
+    <!-- 成功提示 -->
+    <div class="success-toast" id="successToast">密码验证通过！</div>
+    
+    <!-- 下载引导提示 -->
+    <div class="download-guide" id="downloadGuide">正在跳转下载页... 若未跳转请手动打开浏览器</div>
+
     <script>
+        // LeanCloud 初始化（请替换为你的 AppID 和 AppKey）
+        const APP_ID = 'H1Oy6bMdVZ0QFlGegGDGGnur-gzGzoHsz';
+        const APP_KEY = 'AUiwoxbwJx58nOVPPnmKnEuN';
+        const SERVER_URL = 'https://h1oy6bmd.lc-cn-n1-shared.com';
+
+        // 初始化 LeanCloud（如果未引入 SDK，先动态引入）
+        if (typeof AV === 'undefined') {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/leancloud-storage@4.15.0/dist/av-min.js';
+            script.onload = () => {
+                AV.init({ appId: APP_ID, appKey: APP_KEY, serverURL: SERVER_URL });
+                console.log('LeanCloud SDK 加载并初始化完成');
+            };
+            document.head.appendChild(script);
+        } else {
+            AV.init({ appId: APP_ID, appKey: APP_KEY, serverURL: SERVER_URL });
+        }
+
         // 雪花动画
         function createSnowfall() {
             const container = document.getElementById('snowContainer');
             const count = window.innerWidth < 768 ? 150 : 300;
             
-            // 清空容器
             container.innerHTML = '';
             
             for (let i = 0; i < count; i++) {
                 const snowflake = document.createElement('div');
                 snowflake.classList.add('snowflake');
                 
-                // 随机属性
                 const size = Math.random() * 4 + 1;
                 const duration = Math.random() * 15 + 5;
                 const xPos = Math.random() * 100;
                 const delay = Math.random() * 10;
                 const opacity = Math.random() * 0.5 + 0.3;
                 
-                // 设置样式
                 snowflake.style.width = `${size}px`;
                 snowflake.style.height = `${size}px`;
                 snowflake.style.left = `${xPos}%`;
@@ -554,7 +613,6 @@
             const canvas = document.getElementById('connectionCanvas');
             const ctx = canvas.getContext('2d');
             
-            // 设置画布尺寸
             function resizeCanvas() {
                 canvas.width = window.innerWidth;
                 canvas.height = window.innerHeight;
@@ -562,11 +620,9 @@
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
             
-            // 点的数量
             const pointCount = 30;
             const points = [];
             
-            // 创建点
             class Point {
                 constructor() {
                     this.x = Math.random() * canvas.width;
@@ -580,7 +636,6 @@
                     this.x += this.vx;
                     this.y += this.vy;
                     
-                    // 边界反弹
                     if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
                     if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
                 }
@@ -593,23 +648,18 @@
                 }
             }
             
-            // 初始化点
             for (let i = 0; i < pointCount; i++) {
                 points.push(new Point());
             }
             
-            // 动画循环
             function animate() {
-                // 清空画布
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
-                // 更新并绘制点
                 points.forEach(point => {
                     point.update();
                     point.draw();
                 });
                 
-                // 绘制连线
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
                 ctx.lineWidth = 0.8;
                 
@@ -622,7 +672,6 @@
                             Math.pow(p1.y - p2.y, 2)
                         );
                         
-                        // 距离小于120像素时连线
                         if (distance < 120) {
                             ctx.beginPath();
                             ctx.moveTo(p1.x, p1.y);
@@ -638,13 +687,12 @@
             animate();
         }
         
-        // 点击特效动画 - 修复黑色遮盖问题
+        // 点击特效动画（石头入海波纹效果）
         function createClickEffects() {
             const canvas = document.getElementById('clickEffectCanvas');
             const ctx = canvas.getContext('2d');
             const effects = [];
             
-            // 设置画布尺寸
             function resizeCanvas() {
                 canvas.width = window.innerWidth;
                 canvas.height = window.innerHeight;
@@ -652,25 +700,24 @@
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
             
-            // 点击效果类 - 优化参数让特效更明显
-            class ClickEffect {
+            // 波纹特效类
+            class RippleEffect {
                 constructor(x, y) {
                     this.x = x;
                     this.y = y;
-                    this.radius = 8;          // 初始半径
-                    this.maxRadius = 80;      // 最大半径（增大）
-                    this.alpha = 1;           // 初始透明度
-                    this.fadeSpeed = 0.015;   // 减慢淡出速度
-                    this.growSpeed = 1.2;     // 减慢生长速度
-                    this.segments = 12;       // 增加网格分段（更密集）
-                    this.angleStep = (Math.PI * 2) / this.segments;
-                    this.lineWidth = 1.2;     // 加粗线条
+                    this.radius = 10;        // 初始半径
+                    this.maxRadius = 100;    // 最大半径
+                    this.alpha = 1;          // 初始透明度
+                    this.fadeSpeed = 0.012;  // 淡出速度
+                    this.growSpeed = 1.5;    // 生长速度
+                    this.lineWidth = 1.2;    // 线条宽度
+                    // 与主题搭配的颜色（蓝灰色调）
+                    this.color = 'rgba(138, 155, 168, 0.8)';
                 }
                 
                 update() {
                     this.radius += this.growSpeed;
                     this.alpha -= this.fadeSpeed;
-                    
                     // 超出最大半径或透明度为0时移除
                     return this.radius > this.maxRadius || this.alpha <= 0;
                 }
@@ -678,55 +725,35 @@
                 draw() {
                     ctx.save();
                     ctx.globalAlpha = this.alpha;
-                    // 改用粉色系线条，和页面风格统一且更显眼
-                    ctx.strokeStyle = 'rgba(255, 105, 180, 0.9)';
+                    ctx.strokeStyle = this.color;
                     ctx.lineWidth = this.lineWidth;
                     
-                    // 绘制网格圆形（双层网格更清晰）
-                    // 外层圆弧
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                    ctx.stroke();
-                    
-                    // 内层圆弧（半径为外层的一半）
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.radius * 0.5, 0, Math.PI * 2);
-                    ctx.stroke();
-                    
-                    // 径向线（连接中心和外层）
-                    for (let i = 0; i < this.segments; i++) {
-                        const angle = this.angleStep * i;
-                        const x1 = this.x + Math.cos(angle) * this.radius;
-                        const y1 = this.y + Math.sin(angle) * this.radius;
-                        
-                        ctx.beginPath();
-                        ctx.moveTo(this.x, this.y);
-                        ctx.lineTo(x1, y1);
-                        ctx.stroke();
+                    // 绘制多层同心圆（波纹效果）
+                    for (let i = 0; i < 3; i++) {
+                        const layerRadius = this.radius - (i * 15);
+                        if (layerRadius > 0) {
+                            ctx.beginPath();
+                            ctx.arc(this.x, this.y, layerRadius, 0, Math.PI * 2);
+                            ctx.stroke();
+                        }
                     }
                     
                     ctx.restore();
                 }
             }
             
-            // 添加点击效果
             function addEffect(x, y) {
-                effects.push(new ClickEffect(x, y));
+                effects.push(new RippleEffect(x, y));
             }
             
-            // 动画循环 - 修复清除方式，不再添加黑色背景
             function animate() {
-                // 关键修复：用clearRect完全清空画布，避免半透明黑色叠加
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
-                // 更新并绘制所有效果
                 for (let i = effects.length - 1; i >= 0; i--) {
                     const effect = effects[i];
-                    // 先更新再绘制，避免重复调用update
                     const isExpired = effect.update();
                     effect.draw();
                     
-                    // 移除过期效果
                     if (isExpired) {
                         effects.splice(i, 1);
                     }
@@ -735,9 +762,7 @@
                 requestAnimationFrame(animate);
             }
             
-            // 监听点击事件 - 扩大触发范围，确保空白处都能触发
             document.addEventListener('click', (e) => {
-                // 排除按钮、弹窗等元素
                 const target = e.target;
                 if (!target.closest('.btn, .popup, .popup-overlay, .qq-copy-overlay, .copy-toast, .error-toast, .loading-overlay')) {
                     addEffect(e.clientX, e.clientY);
@@ -757,74 +782,58 @@
         // 窗口大小变化时重新生成雪花
         window.addEventListener('resize', createSnowfall);
         
-        // 音乐播放控制 - 优化快速恢复播放
+        // 音乐播放控制
         const audioUrl = 'https://xx13146.oss-cn-beijing.aliyuncs.com//3e/63d7389ac887ea2eec10e63a9040d1.mp3';
         const audio = new Audio(audioUrl);
         let isPlaying = false;
-        let playbackTimer = null; // 播放恢复定时器
+        let playbackTimer = null;
         
-        // 播放音乐函数
         function playMusic() {
-            // 清除之前的定时器避免重复
             if (playbackTimer) clearTimeout(playbackTimer);
             
             audio.play().then(() => {
                 isPlaying = true;
-                console.log('音乐开始播放');
             }).catch(err => {
-                console.log('自动播放被拦截，等待用户交互');
-                // 绑定一次点击事件尝试播放
                 document.addEventListener('click', tryPlayOnClick, { once: true });
             });
         }
         
-        // 用户点击页面时尝试播放
         function tryPlayOnClick() {
             audio.play().then(() => {
                 isPlaying = true;
-                console.log('音乐通过用户交互开始播放');
             }).catch(err => {
-                console.log('播放失败，300ms后重试');
-                // 失败后300ms再次尝试
                 playbackTimer = setTimeout(tryPlayOnClick, 300);
             });
         }
         
-        // 检测音乐状态并快速恢复
         function checkAndResumePlayback() {
             if (!isPlaying && audio.currentTime > 0) {
-                console.log('音乐暂停，300ms后恢复');
                 playbackTimer = setTimeout(() => {
                     playMusic();
                 }, 300);
             }
         }
         
-        // 监听音乐暂停事件
         audio.addEventListener('pause', () => {
             isPlaying = false;
             checkAndResumePlayback();
         });
         
-        // 监听音乐播放事件
         audio.addEventListener('play', () => {
             isPlaying = true;
             if (playbackTimer) clearTimeout(playbackTimer);
         });
         
-        // 监听音乐结束事件（循环播放）
         audio.addEventListener('ended', () => {
             audio.currentTime = 0;
             playMusic();
         });
         
-        // 页面加载后立即尝试播放
         document.addEventListener('DOMContentLoaded', () => {
             audio.volume = 1;
             playMusic();
         });
         
-        // 页面隐藏时暂停，显示时立即恢复
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 audio.pause();
@@ -837,6 +846,7 @@
         spans.forEach((span, index) => {
             span.style.animationDelay = `${index * 0.18}s`;
         });
+        
         // 客服弹窗控制
         const contactBtn = document.getElementById('contactBtn');
         const popupOverlay = document.getElementById('popupOverlay');
@@ -848,6 +858,7 @@
                 popupOverlay.style.display = 'none';
             }
         });
+        
         // QQ客服复制功能
         const qqServiceBtn = document.getElementById('qqServiceBtn');
         const qqCopyOverlay = document.getElementById('qqCopyOverlay');
@@ -856,25 +867,21 @@
         const cancelCopy = document.getElementById('cancelCopy');
         const copyToast = document.getElementById('copyToast');
         
-        // 点击QQ客服显示复制弹窗
         qqServiceBtn.addEventListener('click', function() {
             popupOverlay.style.display = 'none';
             qqCopyOverlay.style.display = 'flex';
         });
         
-        // 取消复制
         cancelCopy.addEventListener('click', function() {
             qqCopyOverlay.style.display = 'none';
         });
         
-        // 点击空白处关闭复制弹窗
         qqCopyOverlay.addEventListener('click', function(e) {
             if (e.target === qqCopyOverlay) {
                 qqCopyOverlay.style.display = 'none';
             }
         });
         
-        // 复制QQ号
         confirmCopy.addEventListener('click', function() {
             const qq = qqNumber.textContent.trim();
             navigator.clipboard.writeText(qq).then(() => {
@@ -884,7 +891,6 @@
                     qqCopyOverlay.style.display = 'none';
                 }, 1500);
             }).catch(err => {
-                console.error('复制失败:', err);
                 errorToast.textContent = '复制失败，请手动复制';
                 errorToast.style.display = 'block';
                 setTimeout(() => {
@@ -892,7 +898,8 @@
                 }, 2000);
             });
         });
-        // 安装包密码与下载控制
+        
+        // 核心修改：蓝奏云分享页跳转下载（无需直链）
         const packageBtn = document.getElementById('getPackageBtn');
         const packageOverlay = document.getElementById('packageOverlay');
         const packagePassword = document.getElementById('packagePassword');
@@ -900,20 +907,104 @@
         const cancelPackage = document.getElementById('cancelPackage');
         const loadingOverlay = document.getElementById('loadingOverlay');
         const errorToast = document.getElementById('errorToast');
-        const downloadUrl = 'https://www.123912.com/s/3fY5Vv-Eq0g3';
+        const successToast = document.getElementById('successToast');
+        const downloadGuide = document.getElementById('downloadGuide');
         
-        function showError() {
+        // 你的蓝奏云分享页链接（直接用你提供的链接）
+        const LANZOU_SHARE_URL = 'http://wpan.cdndns.site/down/a3ee633d7d6522270b63a5df05a61c4d';
+        
+        function showError(msg = '密码错误，请重试') {
+            errorToast.textContent = msg;
             errorToast.style.display = 'block';
             setTimeout(() => {
                 errorToast.style.display = 'none';
             }, 2000);
         }
+        
+        function showSuccess(msg = '密码验证通过！') {
+            successToast.textContent = msg;
+            successToast.style.display = 'block';
+            setTimeout(() => {
+                successToast.style.display = 'none';
+            }, 1500);
+        }
+        
         function showLoading() {
             loadingOverlay.style.display = 'flex';
         }
+        
         function hideLoading() {
             loadingOverlay.style.display = 'none';
         }
+        
+        // 跳转蓝奏云下载页（自动触发下载）
+        function jumpToLanzouDownload() {
+            // 显示引导提示
+            downloadGuide.style.display = 'block';
+            
+            // 方法1：直接跳转（大部分手机浏览器支持）
+            window.open(LANZOU_SHARE_URL, '_blank');
+            
+            // 方法2：备用跳转（防止方法1失败）
+            setTimeout(() => {
+                const a = document.createElement('a');
+                a.href = LANZOU_SHARE_URL;
+                a.target = '_blank';
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                // 3秒后隐藏提示
+                setTimeout(() => {
+                    downloadGuide.style.display = 'none';
+                }, 3000);
+            }, 1000);
+        }
+        
+        // 密码验证+跳转下载逻辑
+        confirmPackage.addEventListener('click', async () => {
+            const password = packagePassword.value.trim();
+            if (!password) {
+                showError('请输入密码');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                // 确保 LeanCloud SDK 已加载
+                if (typeof AV === 'undefined') {
+                    throw new Error('SDK 加载中，请稍后重试');
+                }
+                
+                // 调用云函数验证密码
+                const result = await AV.Cloud.run('checkPassword', { password });
+                
+                hideLoading();
+                
+                if (result.code === 200 && result.data.valid) {
+                    showSuccess('密码验证通过，跳转下载页！');
+                    // 延迟1秒后跳转（让用户看到提示）
+                    setTimeout(() => {
+                        packageOverlay.style.display = 'none';
+                        // 跳转蓝奏云下载页
+                        jumpToLanzouDownload();
+                    }, 1500);
+                } else {
+                    showError(result.message || '密码无效或已使用');
+                }
+            } catch (error) {
+                hideLoading();
+                showError('验证失败：' + error.message);
+            }
+        });
+        
+        packagePassword.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                confirmPackage.click();
+            }
+        });
         
         packageBtn.addEventListener('click', () => {
             packageOverlay.style.display = 'flex';
@@ -922,27 +1013,11 @@
                 packagePassword.focus();
             }, 100);
         });
+        
         cancelPackage.addEventListener('click', () => {
             packageOverlay.style.display = 'none';
         });
-        confirmPackage.addEventListener('click', () => {
-            const password = packagePassword.value.trim();
-            if (password === 'actnb886') {
-                packageOverlay.style.display = 'none';
-                showLoading();
-                setTimeout(() => {
-                    hideLoading();
-                    window.location.href = downloadUrl;
-                }, 1000);
-            } else {
-                showError();
-            }
-        });
-        packagePassword.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                confirmPackage.click();
-            }
-        });
+        
         packageOverlay.addEventListener('click', (e) => {
             if (e.target === packageOverlay) {
                 packageOverlay.style.display = 'none';
